@@ -10,4 +10,4 @@ jupyter_kernel:
 
 # Start MLFlow server
 mlflow_server:
-	mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db --default-artifact-root ./mlflow/artifacts_local
+	mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db --default-artifact-root ./mlflow/artifacts
