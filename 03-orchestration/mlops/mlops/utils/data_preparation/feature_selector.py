@@ -2,7 +2,7 @@ from typing import List, Optional
 
 import pandas as pd
 
-CATEGORICAL_FEATURES = ['PU_DO']
+CATEGORICAL_FEATURES = ['PULocationID', 'DOLocationID'] #['PU_DO']
 NUMERICAL_FEATURES = ['trip_distance']
 
 
