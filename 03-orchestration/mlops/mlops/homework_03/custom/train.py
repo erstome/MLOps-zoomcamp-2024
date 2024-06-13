@@ -19,6 +19,6 @@ def transform_custom(data, *args, **kwargs):
     lr.fit(X,y)
     print(lr.intercept_)
 
-    return lr
+    return lr, dv
 
 
