@@ -52,7 +52,7 @@ def save_output(df_result: pd.DataFrame, year: int, month: int) -> None:
 
 def main(year: int = 2023, month: int = 3) -> None:
 
-    df = read_data(f'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year:04d}-{month:02d}.parquet')
+    df = read_data(f'./data/yellow_tripdata_{year:04d}-{month:02d}.parquet')
 
     dv, model = load_model()
 
@@ -66,7 +66,7 @@ def main(year: int = 2023, month: int = 3) -> None:
     
     save_output(df_result, year, month)
     
-    print(f'Meand of {year}-{month}: {np.mean(y_pred)}')
+    print(f'Mean of {year}-{month}: {np.mean(y_pred)}')
 
 
 if __name__ == '__main__':
