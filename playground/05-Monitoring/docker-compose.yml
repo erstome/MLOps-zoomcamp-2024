@@ -1,0 +1,42 @@
+version: '3.7'
+
+# is the place where I can save all my artifacts.
+# If I down and up my docker container again, all the data will be saved in this folder/volume.
+volumes: 
+  grapana_data: {}
+
+networks:
+  front-tier:
+  back-tier:
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+    ports:
+      - "5432:5432"
+    networks:
+      - back-tier
+
+  adminer: # will help us to manage the database content
+    image: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - back-tier
+      - front-tier
+
+  grafana:
+    image: grafana/grafana
+    user: "472"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/grafana_datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+    networks:
+      - back-tier
+      - front-tier
+    restart: always
