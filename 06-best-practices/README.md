@@ -14,6 +14,8 @@ answer: 3
 
 ## Q4. Mocking S3 with Localstack
 
+answer: --endpoint-url
+
 ## Q5. Creating test data
 
 ## Q6. Finish the integration test
