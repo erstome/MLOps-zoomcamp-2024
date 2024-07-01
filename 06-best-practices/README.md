@@ -10,6 +10,8 @@ answer: Both of the above options are correct
 
 ## Q3. Writing first unit test
 
+answer: 3
+
 ## Q4. Mocking S3 with Localstack
 
 ## Q5. Creating test data

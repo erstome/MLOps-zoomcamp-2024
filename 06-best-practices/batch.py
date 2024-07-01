@@ -4,11 +4,15 @@
 import sys
 import pickle
 import pandas as pd
+from typing import List
 
 
-def read_data(filename, categorical):
+def read_data(filename: str) -> pd.DataFrame:
     df = pd.read_parquet(filename)
     
+    return df
+
+def prepare_data(df: pd.DataFrame, categorical: List[str]) -> pd.DataFrame:
     df['duration'] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
     df['duration'] = df.duration.dt.total_seconds() / 60
 
@@ -28,7 +32,8 @@ def main(year: int, month: int):
 
     categorical = ['PULocationID', 'DOLocationID']
 
-    df = read_data(input_file, categorical)
+    df = read_data(input_file)
+    df = prepare_data(df, categorical)
     df['ride_id'] = f'{year:04d}/{month:02d}_' + df.index.astype('str')
 
     dicts = df[categorical].to_dict(orient='records')
