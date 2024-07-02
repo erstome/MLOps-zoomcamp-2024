@@ -18,4 +18,6 @@ answer: --endpoint-url
 
 ## Q5. Creating test data
 
+answer: 3663
+
 ## Q6. Finish the integration test

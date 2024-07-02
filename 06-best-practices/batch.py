@@ -1,14 +1,25 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import sys
 import pickle
 import pandas as pd
 from typing import List
+import os
+import sys
 
 
 def read_data(filename: str) -> pd.DataFrame:
-    df = pd.read_parquet(filename)
+    S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL')
+    
+    if S3_ENDPOINT_URL is not None:
+        options = {
+            'client_kwargs': {
+                'endpoint_url': S3_ENDPOINT_URL
+            }
+        }
+        df = pd.read_parquet(filename, storage_options=options)
+    else:
+        df = pd.read_parquet(filename)
     
     return df
 
@@ -22,10 +33,23 @@ def prepare_data(df: pd.DataFrame, categorical: List[str]) -> pd.DataFrame:
     
     return df
 
+def get_input_path(year, month):
+    default_input_pattern = 'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year:04d}-{month:02d}.parquet'
+    input_pattern = os.getenv('INPUT_FILE_PATTERN', default_input_pattern)
+    return input_pattern.format(year=year, month=month)
+
+
+def get_output_path(year, month):
+    default_output_pattern = 's3://nyc-duration-prediction-alexey/taxi_type=fhv/year={year:04d}/month={month:02d}/predictions.parquet'
+    output_pattern = os.getenv('OUTPUT_FILE_PATTERN', default_output_pattern)
+    return output_pattern.format(year=year, month=month)
+
+
+
 def main(year: int, month: int):
 
-    input_file = f'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year:04d}-{month:02d}.parquet'
-    output_file = f'output/yellow_tripdata_{year:04d}-{month:02d}.parquet'
+    input_file = get_input_path(year, month)
+    output_file = get_output_path(year, month)
 
     with open('model.bin', 'rb') as f_in:
         dv, lr = pickle.load(f_in)
@@ -49,4 +73,7 @@ def main(year: int, month: int):
     df_result.to_parquet(output_file, engine='pyarrow', index=False)
     
 if __name__ == '__main__':
-    main(2022, 2)
+    year = int(sys.argv[1])
+    month = int(sys.argv[2])
+
+    main(year=year, month=month)
