@@ -8,7 +8,18 @@ import os
 import sys
 
 
-def read_data(filename: str) -> pd.DataFrame:
+def prepare_data(df: pd.DataFrame,
+                 categorical: List[str] = ['PULocationID', 'DOLocationID']) -> pd.DataFrame:
+    df['duration'] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
+    df['duration'] = df.duration.dt.total_seconds() / 60
+
+    df = df[(df.duration >= 1) & (df.duration <= 60)].copy()
+
+    df[categorical] = df[categorical].fillna(-1).astype('int').astype('str')
+    
+    return df
+
+def read_data(filename: str, categorical) -> pd.DataFrame:
     S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL')
     
     if S3_ENDPOINT_URL is not None:
@@ -21,17 +32,21 @@ def read_data(filename: str) -> pd.DataFrame:
     else:
         df = pd.read_parquet(filename)
     
-    return df
+    return prepare_data(df, categorical)
 
-def prepare_data(df: pd.DataFrame, categorical: List[str]) -> pd.DataFrame:
-    df['duration'] = df.tpep_dropoff_datetime - df.tpep_pickup_datetime
-    df['duration'] = df.duration.dt.total_seconds() / 60
-
-    df = df[(df.duration >= 1) & (df.duration <= 60)].copy()
-
-    df[categorical] = df[categorical].fillna(-1).astype('int').astype('str')
+def save_data(dataframe: pd.DataFrame, filename: str):
+    S3_ENDPOINT_URL = os.getenv('S3_ENDPOINT_URL')
     
-    return df
+    if S3_ENDPOINT_URL is not None:
+        options = {
+            'client_kwargs': {
+                'endpoint_url': S3_ENDPOINT_URL
+            }
+        }
+        dataframe.to_parquet(filename, engine='pyarrow', index=False, storage_options=options)
+    else:
+        dataframe.to_parquet(filename, engine='pyarrow', index=False)
+
 
 def get_input_path(year, month):
     default_input_pattern = 'https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_{year:04d}-{month:02d}.parquet'
@@ -40,7 +55,7 @@ def get_input_path(year, month):
 
 
 def get_output_path(year, month):
-    default_output_pattern = 's3://nyc-duration-prediction-alexey/taxi_type=fhv/year={year:04d}/month={month:02d}/predictions.parquet'
+    default_output_pattern = 's3://nyc-duration/taxi_type=fhv/year={year:04d}/month={month:02d}/predictions.parquet'
     output_pattern = os.getenv('OUTPUT_FILE_PATTERN', default_output_pattern)
     return output_pattern.format(year=year, month=month)
 
@@ -56,8 +71,8 @@ def main(year: int, month: int):
 
     categorical = ['PULocationID', 'DOLocationID']
 
-    df = read_data(input_file)
-    df = prepare_data(df, categorical)
+    df = read_data(input_file, categorical)
+    # df = prepare_data(df, categorical)
     df['ride_id'] = f'{year:04d}/{month:02d}_' + df.index.astype('str')
 
     dicts = df[categorical].to_dict(orient='records')
@@ -65,12 +80,13 @@ def main(year: int, month: int):
     y_pred = lr.predict(X_val)
 
     print('predicted mean duration:', y_pred.mean())
+    print('sum of predicted durations:', y_pred.sum())
 
     df_result = pd.DataFrame()
     df_result['ride_id'] = df['ride_id']
     df_result['predicted_duration'] = y_pred
-
-    df_result.to_parquet(output_file, engine='pyarrow', index=False)
+    
+    save_data(df_result, output_file)
     
 if __name__ == '__main__':
     year = int(sys.argv[1])

@@ -21,20 +21,24 @@ data = [
     (1, 2, dt(2, 2), dt(2, 3)),
     (None, 1, dt(1, 2, 0), dt(1, 2, 50)),
     (2, 3, dt(1, 2, 0), dt(1, 2, 59)),
-    (3, 4, dt(1, 2, 0), dt(2, 2, 1)),
+    (3, 4, dt(1, 2, 0), dt(2, 2, 1)),     
 ]
 
 columns = ['PULocationID', 'DOLocationID', 'tpep_pickup_datetime', 'tpep_dropoff_datetime']
 df_input = pd.DataFrame(data, columns=columns)
 
+input_file = batch.get_input_path(2022, 1)
+output_file = batch.get_output_path(2022, 1)
 
 df_input.to_parquet(
-    's3://nyc-duration/df_input.parquet',
+    input_file,
     engine='pyarrow',
     compression=None,
     index=False,
     storage_options=options
 )
 
+os.system('python batch.py 2022 1')
 
-
+df_actual = pd.read_parquet(output_file, storage_options=options)
+print(df_actual['predicted_duration'].sum())

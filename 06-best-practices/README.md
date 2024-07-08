@@ -21,3 +21,5 @@ answer: --endpoint-url
 answer: 3663
 
 ## Q6. Finish the integration test
+
+answer: 31.51
